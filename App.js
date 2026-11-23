@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import {View, Text, TextInput, ScrollView, Pressable, StyleSheet, Alert, StatusBar} from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 
 const C = {
   bg: "#100D19",
@@ -437,8 +438,21 @@ export default function App() {
 
         {["Inicio", "Favoritos"].includes(page) && (
           <>
-            <Text style={s.brand}>✳ MUNOVA</Text>
-            <Text style={s.tagline}>Descubre. Compra. Disfruta.</Text>
+            <View style={s.appHeader}>
+              <View>
+                <Text style={s.brand}>✳ MUNOVA</Text>
+                <Text style={s.tagline}>Descubre. Compra. Disfruta.</Text>
+              </View>
+
+              <View style={s.notificationButton}>
+                <Text style={s.notificationIcon}>
+                  <Ionicons
+                  name="notifications-outline"
+                  size={23}
+                  color={C.lime}
+                /></Text>
+              </View>
+            </View>
 
             <TextInput
               value={search}
@@ -600,7 +614,13 @@ export default function App() {
                         ]}
                       >
                         
-                        <Text style={s.cartButtonText}>🛒</Text>
+                        <Text style={s.cartButtonText}>
+                          <Ionicons
+                            name="cart-outline"
+                            size={20}
+                            color={C.bg}
+                          />
+                        </Text>
                       </Pressable>
                     </View>
                   </View>
@@ -755,41 +775,55 @@ export default function App() {
       </ScrollView>
 
       {page !== "Detalle" && (
-        <View style={s.tabs}>
-          {["Inicio", "Favoritos", "Carrito", "Historial"].map(name => (
-            <Pressable
-              key={name}
-              onPress={() => {
-                setPage(name);
-                setSearch("");
-                setCategory("Todas");
-              }}
-            >
+  <View style={s.tabs}>
+    {["Inicio", "Favoritos", "Carrito", "Historial"].map(name => {
 
-              <Text
-                style={[
-                  s.tabText,
-                  page === name && { color: C.lime }
-                ]}
-              >
+      const active = page === name;
 
-                {name === "Inicio"
-                  ? "⌂"
-                  : name === "Favoritos"
-                  ? "♡"
-                  : name === "Carrito"
-                  ? "🛒"
-                  : "◷"}
-                {"\n"}
-                {name}
-                {name === "Carrito" && count
-                  ? ` (${count})`
-                  : ""}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      )}
+      const iconName =
+        name === "Inicio"
+          ? active ? "home" : "home-outline"
+          : name === "Favoritos"
+          ? active ? "heart" : "heart-outline"
+          : name === "Carrito"
+          ? active ? "cart" : "cart-outline"
+          : active ? "time" : "time-outline";
+
+      return (
+        <Pressable
+          key={name}
+          onPress={() => {
+            setPage(name);
+            setSearch("");
+            setCategory("Todas");
+          }}
+          style={s.tabItem}
+        >
+          <Ionicons
+            name={iconName}
+            size={22}
+            color={active ? C.lime : C.white}
+          />
+
+          <Text
+            style={[
+              s.tabText,
+              {
+                color: active ? C.lime : C.white,
+                fontWeight: active ? "800" : "500"
+              }
+            ]}
+          >
+            {name}
+            {name === "Carrito" && count > 0
+              ? ` (${count})`
+              : ""}
+          </Text>
+        </Pressable>
+      );
+    })}
+  </View>
+)}
 
       {checkout && (
         <View style={s.overlay}>
@@ -867,8 +901,30 @@ const s = StyleSheet.create({
 
   tagline: {
     color: C.white,
-    marginLeft: 40,
+    marginLeft: 36,
     marginBottom: 18
+  },
+
+  appHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 15
+  },
+
+  notificationButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: C.card,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 10
+  },
+
+  notificationIcon: {
+    fontSize: 23,
+    color: C.lime
   },
 
   search: {
@@ -1148,6 +1204,13 @@ const s = StyleSheet.create({
     textAlign: "center",
     fontSize: 11
   },
+
+  tabItem: {
+  flex: 1,
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 4
+},
 
   order: {
     backgroundColor: C.card,
