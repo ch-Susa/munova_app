@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from "react";
-import {SafeAreaView, View, Text, TextInput, ScrollView, Pressable, StyleSheet, Alert, StatusBar} from "react-native";
+import {View, Text, TextInput, ScrollView, Pressable, StyleSheet, Alert, StatusBar} from "react-native";
+
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const C = {
   bg: "#100D19",
@@ -129,15 +131,11 @@ const initialProducts = [
   }
 ];
 
-// FORMATO DE PRECIOS
 const money = n =>
   "$" + Math.round(n).toLocaleString("es-CO");
 
-// REGLA DE ENVÍO
-const shippingFor = n =>
-  n === 0 || n >= 150000 ? 0 : 8000;
+const shippingFor = n => n === 0 || n >= 150000 ? 0 : 8000;
 
-// COMPONENTE DE BOTÓN
 function Button({
   title,
   onPress,
@@ -166,10 +164,8 @@ function Button({
   );
 }
 
-// APLICACIÓN PRINCIPAL
 export default function App() {
 
-  // ESTADOS
   const [products, setProducts] = useState(initialProducts);
   const [favorites, setFavorites] = useState([]);
   const [cart, setCart] = useState([]);
@@ -191,7 +187,6 @@ export default function App() {
 
   const [checkout, setCheckout] = useState(false);
 
-  // CÁLCULOS DEL CARRITO
   const subtotal = cart.reduce(
     (sum, p) => sum + p.price * p.qty,
     0
@@ -205,11 +200,9 @@ export default function App() {
     0
   );
 
-  // BÚSQUEDA, FILTROS Y ORDENAMIENTO
   const visible = useMemo(() => {
 
     let data = [...products];
-
     if (page === "Favoritos") {
       data = data.filter(p =>
         favorites.includes(p.id)
@@ -237,12 +230,10 @@ export default function App() {
     if (sort === "desc") {
       data.sort((a, b) => b.price - a.price);
     }
-
     return data;
 
   }, [products, favorites, page, category, search, sort]);
 
-  // AGREGAR PRODUCTOS
   function add(product) {
 
     const line = cart.find(p => p.id === product.id);
@@ -268,7 +259,6 @@ export default function App() {
     );
   }
 
-  // MODIFICAR CANTIDADES
   function quantity(id, delta) {
 
     const line = cart.find(p => p.id === id);
@@ -295,7 +285,6 @@ export default function App() {
     );
   }
 
-  // CONFIRMAR PEDIDO
   function confirm() {
 
     if (Object.values(buyer).some(v => !v.trim())) {
@@ -327,18 +316,15 @@ export default function App() {
       total
     };
 
-    // DESCONTAR INVENTARIO
     setProducts(old =>
       old.map(p => {
         const line = cart.find(x => x.id === p.id);
-
         return line
           ? { ...p, stock: p.stock - line.qty }
           : p;
       })
     );
 
-    // GUARDAR PEDIDO
     setOrders(old => [order, ...old]);
 
     setCart([]);
@@ -352,7 +338,6 @@ export default function App() {
     });
 
     setPage("Historial");
-
     Alert.alert(
       "Pedido simulado",
       `Pedido ${order.code} confirmado. No se realizó ningún cobro.`
@@ -369,11 +354,9 @@ export default function App() {
       : page === "Favoritos"
       ? "Mis favoritos"
       : "MUNOVA";
-
   return (
 
     <SafeAreaView style={s.safe}>
-
       <StatusBar barStyle="light-content" />
 
       <ScrollView
@@ -381,10 +364,7 @@ export default function App() {
         keyboardShouldPersistTaps="handled"
       >
 
-        {/* PANTALLA DE DETALLE */}
-
         {page === "Detalle" && selected ? (
-
           <>
             <View style={s.top}>
 
@@ -411,7 +391,6 @@ export default function App() {
               >
                 {favorites.includes(selected.id) ? "♥" : "♡"}
               </Text>
-
             </View>
 
             <View style={s.hero}>
@@ -453,17 +432,11 @@ export default function App() {
               onPress={() => add(selected)}
               disabled={selected.stock === 0}
             />
-
           </>
-
         ) : null}
 
-        {/* INICIO Y FAVORITOS */}
-
         {["Inicio", "Favoritos"].includes(page) && (
-
           <>
-
             <Text style={s.brand}>
               ✳ MUNOVA
             </Text>
@@ -480,8 +453,6 @@ export default function App() {
               style={s.search}
             />
 
-            {/* CATEGORÍAS */}
-
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -489,7 +460,6 @@ export default function App() {
             >
 
               {categories.map((cat, i) => (
-
                 <Pressable
                   key={cat}
                   onPress={() => setCategory(cat)}
@@ -514,17 +484,11 @@ export default function App() {
                   >
                     {cat}
                   </Text>
-
                 </Pressable>
-
               ))}
-
             </ScrollView>
 
-            {/* PRODUCTOS */}
-
             <View style={s.row}>
-
               <Text style={s.section}>
                 {page === "Favoritos"
                   ? "Mis favoritos"
@@ -536,8 +500,6 @@ export default function App() {
               </Text>
 
             </View>
-
-            {/* ORDENAMIENTO */}
 
             <View style={s.row}>
 
@@ -561,21 +523,15 @@ export default function App() {
               >
                 Limpiar
               </Text>
-
             </View>
 
             {visible.length === 0 ? (
-
               <Text style={s.empty}>
                 No encontramos productos.
               </Text>
-
             ) : (
-
               <View style={s.grid}>
-
                 {visible.map(p => (
-
                   <View
                     key={p.id}
                     style={s.product}
@@ -631,41 +587,26 @@ export default function App() {
                       onPress={() => add(p)}
                       disabled={!p.stock}
                     />
-
                   </View>
-
                 ))}
-
               </View>
-
             )}
-
           </>
-
         )}
 
-        {/* CARRITO */}
-
         {page === "Carrito" && (
-
           <>
-
             <Text style={s.heading}>
               {title}
             </Text>
 
             {!cart.length ? (
-
               <Text style={s.empty}>
                 Tu carrito está vacío. Explora MUNOVA y agrega productos.
               </Text>
-
             ) : (
-
               <>
-
                 {cart.map(p => (
-
                   <View
                     key={p.id}
                     style={s.cartLine}
@@ -676,7 +617,6 @@ export default function App() {
                     </Text>
 
                     <View style={{ flex: 1 }}>
-
                       <Text style={s.white}>
                         {p.name}
                       </Text>
@@ -686,7 +626,6 @@ export default function App() {
                       </Text>
 
                       <View style={s.row}>
-
                         <Text
                           onPress={() => quantity(p.id, -1)}
                           style={s.qty}
@@ -715,23 +654,16 @@ export default function App() {
                         >
                           Quitar
                         </Text>
-
                       </View>
-
                     </View>
 
                     <Text style={s.lime}>
                       {money(p.price * p.qty)}
                     </Text>
-
                   </View>
-
                 ))}
 
-                {/* RESUMEN DE COMPRA */}
-
                 <View style={s.summary}>
-
                   <View style={s.row}>
                     <Text style={s.white}>Subtotal</Text>
                     <Text style={s.white}>{money(subtotal)}</Text>
@@ -748,26 +680,18 @@ export default function App() {
                     <Text style={s.section}>Total</Text>
                     <Text style={s.total}>{money(total)}</Text>
                   </View>
-
                 </View>
 
                 <Button
                   title="Confirmar compra"
                   onPress={() => setCheckout(true)}
                 />
-
               </>
-
             )}
-
           </>
-
         )}
 
-        {/* HISTORIAL */}
-
         {page === "Historial" && (
-
           <>
 
             <Text style={s.heading}>
@@ -779,11 +703,8 @@ export default function App() {
               <Text style={s.empty}>
                 Aún no tienes pedidos confirmados.
               </Text>
-
             ) : (
-
               orders.map(o => (
-
                 <View
                   key={o.code}
                   style={s.order}
@@ -805,33 +726,21 @@ export default function App() {
                     >
                       {p.qty} × {p.name} · {money(p.price)}
                     </Text>
-
                   ))}
 
                   <Text style={s.total}>
                     {money(o.total)}
                   </Text>
-
                 </View>
-
               ))
-
             )}
-
           </>
-
         )}
-
       </ScrollView>
 
-      {/* MENÚ INFERIOR */}
-
       {page !== "Detalle" && (
-
         <View style={s.tabs}>
-
           {["Inicio", "Favoritos", "Carrito", "Historial"].map(name => (
-
             <Pressable
               key={name}
               onPress={() => {
@@ -855,31 +764,19 @@ export default function App() {
                   : name === "Carrito"
                   ? "🛒"
                   : "◷"}
-
                 {"\n"}
-
                 {name}
-
                 {name === "Carrito" && count
                   ? ` (${count})`
                   : ""}
-
               </Text>
-
             </Pressable>
-
           ))}
-
         </View>
-
       )}
 
-      {/* FORMULARIO DE COMPRA */}
-
       {checkout && (
-
         <View style={s.overlay}>
-
           <View style={s.modal}>
 
             <Text style={s.section}>
@@ -910,7 +807,6 @@ export default function App() {
                 placeholderTextColor={C.muted}
                 style={s.input}
               />
-
             ))}
 
             <Text style={s.white}>
@@ -927,19 +823,13 @@ export default function App() {
               outline
               onPress={() => setCheckout(false)}
             />
-
           </View>
-
         </View>
-
       )}
-
     </SafeAreaView>
-
   );
 }
 
-// ESTILOS
 const s = StyleSheet.create({
 
   safe: {
