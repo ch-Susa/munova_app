@@ -6,8 +6,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const C = {
   bg: "#100D19",
   card: "#211B30",
-  lime: "#B8FF32",
-  purple: "#8B50F6",
+  lime: "#C6FF3D",
+  purple: "#8B5CF6",
   white: "#FFFFFF",
   muted: "#C9C2D5"
 };
@@ -67,6 +67,15 @@ const initialProducts = [
     icon: "🧺"
   },
   {
+    id: "PROD-007",
+    name: "Audífonos inalámbricos",
+    category: categories[3],
+    price: 75000,
+    stock: 12,
+    description: "Sonido envolvente, batería de larga duración y diseño plegable.",
+    icon: "🎧"
+  },
+  {
     id: "PROD-006",
     name: "Separadores de cajón",
     category: categories[2],
@@ -74,15 +83,6 @@ const initialProducts = [
     stock: 0,
     description: "Separadores ajustables para organizar cajones y mantener cada objeto en su lugar.",
     icon: "🗂️"
-  },
-  {
-    id: "PROD-007",
-    name: "Audífonos inalámbricos",
-    category: categories[3],
-    price: 75000,
-    stock: 12,
-    description: "Sonido envolvente, batería de larga duración y diseño plegable para tu rutina.",
-    icon: "🎧"
   },
   {
     id: "PROD-008",
@@ -419,16 +419,16 @@ export default function App() {
 
             <View style={s.info}>
               <Text style={s.white}>
-                🚚 Envío desde $8.000
+                🚚 Envíos a $8.000
               </Text>
 
               <Text style={s.muted}>
-                Gratis en compras desde $150.000
+                En compras menores a $150.000
               </Text>
             </View>
 
             <Button
-              title="Agregar al carrito"
+              title="🛒 Agregar al carrito"
               onPress={() => add(selected)}
               disabled={selected.stock === 0}
             />
@@ -437,13 +437,8 @@ export default function App() {
 
         {["Inicio", "Favoritos"].includes(page) && (
           <>
-            <Text style={s.brand}>
-              ✳ MUNOVA
-            </Text>
-
-            <Text style={s.tagline}>
-              Descubre. Compra. Disfruta.
-            </Text>
+            <Text style={s.brand}>✳ MUNOVA</Text>
+            <Text style={s.tagline}>Descubre. Compra. Disfruta.</Text>
 
             <TextInput
               value={search}
@@ -549,7 +544,7 @@ export default function App() {
                       </Text>
                     </Pressable>
 
-                    <Text
+                    <Pressable
                       onPress={() =>
                         setFavorites(old =>
                           old.includes(p.id)
@@ -559,8 +554,10 @@ export default function App() {
                       }
                       style={s.heart}
                     >
-                      {favorites.includes(p.id) ? "♥" : "♡"}
-                    </Text>
+                      <Text style={s.heartText}>
+                        {favorites.includes(p.id) ? "♥" : "♡"}
+                      </Text>
+                    </Pressable>
 
                     <Text
                       style={s.productName}
@@ -572,21 +569,40 @@ export default function App() {
                       {p.name}
                     </Text>
 
-                    <Text style={s.productPrice}>
-                      {money(p.price)}
+                    <Text style={s.productCategory}>
+                      {p.category}
                     </Text>
 
-                    <Text style={s.stockSmall}>
-                      {p.stock > 0
-                        ? `Stock: ${p.stock}`
-                        : "Agotado"}
+                    <Text
+                      style={[
+                        s.availability,
+                        {
+                          color: p.stock > 0 ? "#83B900" : "#FF6B9D"
+                        }
+                      ]}
+                    >
+                      {p.stock > 0 ? "● Disponible" : "● Agotado"}
                     </Text>
 
-                    <Button
-                      title="Agregar +"
-                      onPress={() => add(p)}
-                      disabled={!p.stock}
-                    />
+                    <View style={s.productBottom}>
+
+                      
+                      <Text style={s.productPrice}>
+                        {money(p.price)}
+                      </Text>
+              
+                      <Pressable
+                        onPress={() => add(p)}
+                        disabled={!p.stock}
+                        style={[
+                          s.cartButton,
+                          !p.stock && { opacity: 0.4 }
+                        ]}
+                      >
+                        
+                        <Text style={s.cartButtonText}>🛒</Text>
+                      </Pressable>
+                    </View>
                   </View>
                 ))}
               </View>
@@ -683,7 +699,7 @@ export default function App() {
                 </View>
 
                 <Button
-                  title="Confirmar compra"
+                  title="✓ Confirmar compra"
                   onPress={() => setCheckout(true)}
                 />
               </>
@@ -905,14 +921,13 @@ const s = StyleSheet.create({
   product: {
     width: "48%",
     backgroundColor: "#F7F3FC",
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 9,
-    marginBottom: 12
+    marginBottom: 15
   },
 
   productPic: {
     height: 105,
-    backgroundColor: "#E8DDFB",
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center"
@@ -920,10 +935,20 @@ const s = StyleSheet.create({
 
   heart: {
     position: "absolute",
-    right: 17,
-    top: 115,
-    fontSize: 22,
-    color: C.purple
+    top: 10,
+    right: 6,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 2
+  },
+
+  heartText: {
+    fontSize: 25,
+    color: "purple",
+    fontWeight: "600"
   },
 
   productName: {
@@ -931,11 +956,43 @@ const s = StyleSheet.create({
     color: C.bg,
     marginTop: 8
   },
+  productCategory: {
+    color: "#A69BB8",
+    fontSize: 10,
+    marginTop: 4,
+    fontWeight: "600"
+  },
+
+  availability: {
+    fontSize: 10,
+    fontWeight: "800",
+    marginTop: 5
+  },
 
   productPrice: {
     fontWeight: "900",
     color: "#83B900",
     fontSize: 16
+  },
+
+  productBottom: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 8
+  },
+
+  cartButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: C.lime,
+    justifyContent: "center",
+    alignItems: "center"
+  },
+
+  cartButtonText: {
+    fontSize: 18
   },
 
   stockSmall: {
@@ -947,7 +1004,7 @@ const s = StyleSheet.create({
     backgroundColor: C.lime,
     padding: 13,
     borderRadius: 25,
-    alignItems: "center",
+    alignItems: "left",
     marginTop: 9
   },
 
