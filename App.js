@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {View, Text, TextInput, ScrollView, Pressable, StyleSheet, Alert, StatusBar} from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const C = {
   bg: "#100D19",
@@ -169,8 +170,12 @@ export default function App() {
 
   const [products, setProducts] = useState(initialProducts);
   const [favorites, setFavorites] = useState([]);
+  const [reviews, setReviews] = useState({});
+  const [rating, setRating] = useState(0);
   const [cart, setCart] = useState([]);
   const [orders, setOrders] = useState([]);
+
+  const [storageReady, setStorageReady] = useState(false);
 
   const [page, setPage] = useState("Inicio");
   const [selected, setSelected] = useState(null);
@@ -190,6 +195,90 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Todas");
   const [sort, setSort] = useState("none");
+
+  useEffect(() => {
+  async function loadSavedData() {
+    try {
+      const savedData = await AsyncStorage.getItem("munova_data");
+
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+
+        // Recuperar favoritos válidos
+        const savedFavorites = Array.isArray(parsedData.favorites)
+          ? parsedData.favorites.filter(id =>
+              typeof id === "string" &&
+              products.some(product => product.id === id)
+            )
+          : [];
+
+        const savedCart = Array.isArray(parsedData.cart)
+          ? parsedData.cart.reduce((result, item) => {
+              const product = products.find(p => p.id === item.id);
+
+              if (
+                !product ||
+                !Number.isInteger(item.qty) ||
+                item.qty <= 0 ||
+                !Number.isInteger(product.stock) ||
+                product.stock < 0
+              ) {
+                return result;
+              }
+
+              const validQuantity = Math.min(item.qty, product.stock);
+
+              if (validQuantity > 0) {
+                result.push({
+                  ...product,
+                  qty: validQuantity
+                });
+              }
+
+              return result;
+            }, [])
+          : [];
+
+        setFavorites([...new Set(savedFavorites)]);
+        setCart(savedCart);
+      }
+    } catch (error) {
+      console.log("Error al recuperar los datos locales:", error);
+
+      setFavorites([]);
+      setCart([]);
+    } finally {
+      setStorageReady(true);
+    }
+  }
+
+  loadSavedData();
+}, []);
+
+useEffect(() => {
+  async function saveData() {
+    try {
+      const data = {
+        cart: cart.map(p => ({
+          id: p.id,
+          qty: p.qty
+        })),
+        favorites
+      };
+
+      await AsyncStorage.setItem(
+        "munova_data",
+        JSON.stringify(data)
+      );
+    } catch (error) {
+      console.log("Error al guardar los datos locales:", error);
+    }
+  }
+
+  if (storageReady) {
+    saveData();
+  }
+}, [cart, favorites, storageReady]);
 
   const [showSort, setShowSort] = useState(false);
 
@@ -447,6 +536,33 @@ function saveSellerProduct() {
 
   resetSellerForm();
 }
+
+function saveReview() {
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return Alert.alert(
+      "Valoración inválida",
+      "Selecciona una calificación entre 1 y 5 estrellas."
+    );
+  }
+
+  setReviews(old => ({
+    ...old,
+    [selected.id]: [
+      ...(old[selected.id] || []),
+      {
+        id: Date.now().toString(),
+        rating
+      }
+    ]
+  }));
+
+  setRating(0);
+
+  Alert.alert(
+    "¡Gracias por tu valoración!",
+    "Tu reseña se registró correctamente."
+  );
+}
   
   function confirm() {
 
@@ -541,6 +657,17 @@ function saveSellerProduct() {
     );
   }
 
+  const selectedReviews = selected
+  ? reviews[selected.id] || []
+  : [];
+
+  const reviewAverage = selectedReviews.length
+    ? selectedReviews.reduce(
+        (sum, review) => sum + review.rating,
+        0
+      ) / selectedReviews.length
+    : 0;
+
   const title =
     page === "Carrito"
       ? "Carrito de compras"
@@ -619,6 +746,120 @@ function saveSellerProduct() {
                 ? `✓ En stock (${selected.stock})`
                 : "Agotado"}
             </Text>
+
+            <View style={{
+              backgroundColor: C.card,
+              padding: 16,
+              borderRadius: 16,
+              marginTop: 20,
+              gap: 12
+            }}>
+              <Text style={s.section}>
+                Opiniones de compradores
+              </Text>
+
+              <View style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8
+              }}>
+                <Text style={{
+                  color: C.lime,
+                  fontSize: 25,
+                  fontWeight: "900"
+                }}>
+                  {selectedReviews.length > 0
+                    ? reviewAverage.toFixed(1)
+                    : "—"}
+                </Text>
+
+                <View>
+                  <Text style={{ color: C.lime, fontSize: 18 }}>
+                    {selectedReviews.length > 0
+                      ? "★".repeat(Math.round(reviewAverage))
+                      : "☆☆☆☆☆"}
+                  </Text>
+
+                  <Text style={s.muted}>
+                    {selectedReviews.length} valoraciones
+                  </Text>
+                </View>
+              </View>
+
+              <View style={s.divider} />
+
+              <Text style={s.white}>
+                Califica este producto
+              </Text>
+
+              <View style={{
+                flexDirection: "row",
+                gap: 10
+              }}>
+                {[1, 2, 3, 4, 5].map(number => (
+                  <Pressable
+                    key={number}
+                    onPress={() => setRating(number)}
+                  >
+                    <Text style={{
+                      fontSize: 32,
+                      color: number <= rating ? C.lime : "#6D637D"
+                    }}>
+                      ★
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              <Text style={s.muted}>
+                {rating > 0
+                  ? `Seleccionaste ${rating} de 5 estrellas`
+                  : "Selecciona una cantidad de estrellas"}
+              </Text>
+
+              <Button
+                title="Enviar valoración"
+                onPress={saveReview}
+              />
+
+              <View style={s.divider} />
+
+              <Text style={s.white}>
+                Valoraciones registradas
+              </Text>
+
+              {selectedReviews.length === 0 ? (
+                <Text style={s.muted}>
+                  Este producto todavía no tiene valoraciones.
+                </Text>
+              ) : (
+                selectedReviews.map(review => (
+                  <View
+                    key={review.id}
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      paddingVertical: 5
+                    }}
+                  >
+                    <Text style={s.muted}>
+                      Comprador simulado
+                    </Text>
+
+                    <Text style={{
+                      color: C.lime,
+                      fontSize: 17
+                    }}>
+                      {"★".repeat(review.rating)}
+                      <Text style={{ color: "#6D637D" }}>
+                        {"☆".repeat(5 - review.rating)}
+                      </Text>
+                    </Text>
+                  </View>
+                ))
+              )}
+            </View>
 
             <View style={s.info}>
               <Text style={s.white}>
@@ -815,6 +1056,7 @@ function saveSellerProduct() {
                       style={s.productName}
                       onPress={() => {
                         setSelected(p);
+                        setRating(0);
                         setPage("Detalle");
                       }}
                     >
