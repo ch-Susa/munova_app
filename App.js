@@ -190,6 +190,8 @@ export default function App() {
   });
 
   const [checkout, setCheckout] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState("");
 
   const subtotal = cart.reduce(
     (sum, p) => sum + p.price * p.qty,
@@ -197,7 +199,11 @@ export default function App() {
   );
 
   const shipping = shippingFor(subtotal);
-  const total = subtotal + shipping;
+  const discount = appliedCoupon === "MUNOVA10"
+    ? Math.round(subtotal * 0.10)
+    : 0;
+
+  const total = subtotal + shipping - discount;
 
   const count = cart.reduce(
     (sum, p) => sum + p.qty,
@@ -289,6 +295,39 @@ export default function App() {
     );
   }
 
+  function applyCoupon() {
+
+  const code = couponInput.trim().toUpperCase();
+
+  if (!code) {
+    return Alert.alert(
+      "Cupón vacío",
+      "Ingresa un código promocional."
+    );
+  }
+
+  if (code !== "MUNOVA10") {
+    return Alert.alert(
+      "Cupón inválido",
+      "El código ingresado no existe o no es válido."
+    );
+  }
+
+  if (appliedCoupon) {
+    return Alert.alert(
+      "Cupón aplicado",
+      "Ya tienes un cupón promocional activo."
+    );
+  }
+
+  setAppliedCoupon(code);
+  setCouponInput("");
+
+  Alert.alert(
+    "¡Cupón aplicado!",
+    "Has obtenido un descuento del 10%."
+  );
+}
   
   function confirm() {
 
@@ -346,6 +385,8 @@ export default function App() {
       items: cart.map(p => ({ ...p })),
       subtotal,
       shipping,
+      discount,
+      coupon: appliedCoupon,
       total
     };
 
@@ -369,6 +410,9 @@ export default function App() {
       municipio: "",
       direccion: ""
     });
+
+    setAppliedCoupon("");
+    setCouponInput("");
 
     setPage("Historial");
 
@@ -775,6 +819,62 @@ export default function App() {
                   </View>
                 ))}
 
+                <View style={s.couponContainer}>
+
+                  <Text style={s.section}>
+                    ¿Tienes un cupón promocional?
+                  </Text>
+
+                  {!appliedCoupon ? (
+                    <>
+                      <View style={s.couponRow}>
+
+                        <TextInput
+                          value={couponInput}
+                          onChangeText={setCouponInput}
+                          placeholder="Ingresa tu código"
+                          placeholderTextColor={C.muted}
+                          autoCapitalize="characters"
+                          style={s.couponInput}
+                        />
+
+                        <Pressable
+                          onPress={applyCoupon}
+                          style={s.couponButton}
+                        >
+                          <Text style={s.couponButtonText}>
+                            Aplicar
+                          </Text>
+                        </Pressable>
+
+                      </View>
+                    </>
+                  ) : (
+                    <View style={s.couponApplied}>
+
+                      <View>
+                        <Text style={s.lime}>
+                          ✓ {appliedCoupon}
+                        </Text>
+
+                        <Text style={s.muted}>
+                          Descuento del 10% aplicado
+                        </Text>
+                      </View>
+
+                      <Pressable
+                        onPress={() => setAppliedCoupon("")}
+                      >
+                        <Text style={s.removeText}>
+                          Quitar
+                        </Text>
+                      </Pressable>
+
+                    </View>
+                  )}
+
+                </View>
+
                 <View style={s.summary}>
                   <View style={s.row}>
                     <Text style={s.white}>Subtotal</Text>
@@ -787,6 +887,21 @@ export default function App() {
                       {shipping ? money(shipping) : "Gratis"}
                     </Text>
                   </View>
+
+                  
+
+                  {discount > 0 && (
+                    <View style={s.row}>
+                      <Text style={s.lime}>
+                        Descuento ({appliedCoupon})
+                      </Text>
+
+                      <Text style={s.lime}>
+                        -{money(discount)}
+                      </Text>
+                    </View>
+                  )}
+
 
                   <View style={s.row}>
                     <Text style={s.section}>Total</Text>
@@ -898,6 +1013,18 @@ export default function App() {
                   : "Gratis"}
               </Text>
             </View>
+
+            {selectedOrder.discount > 0 && (
+              <View style={s.row}>
+                <Text style={s.lime}>
+                  Descuento ({selectedOrder.coupon})
+                </Text>
+
+                <Text style={s.lime}>
+                  -{money(selectedOrder.discount)}
+                </Text>
+              </View>
+            )}
 
             <View style={s.row}>
               <Text style={s.section}>Total</Text>
@@ -1399,6 +1526,50 @@ const s = StyleSheet.create({
     borderRadius: 15,
     marginTop: 18
   },
+
+  couponContainer: {
+  backgroundColor: C.card,
+  padding: 14,
+  borderRadius: 15,
+  marginTop: 12,
+  marginBottom: 5,
+  gap: 10
+},
+
+couponRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 8
+},
+
+couponInput: {
+  flex: 1,
+  backgroundColor: "#403653",
+  color: C.white,
+  padding: 12,
+  borderRadius: 10
+},
+
+couponButton: {
+  backgroundColor: C.lime,
+  paddingVertical: 12,
+  paddingHorizontal: 15,
+  borderRadius: 10
+},
+
+couponButtonText: {
+  color: C.bg,
+  fontWeight: "900"
+},
+
+couponApplied: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  backgroundColor: "#302A3D",
+  padding: 12,
+  borderRadius: 10
+},
 
   white: {
     color: C.white,
