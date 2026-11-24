@@ -7,48 +7,15 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { categories } from "./src/data/categories";
 import { initialProducts } from "./src/data/initialProducts";
-
-const C = {
-  bg: "#100D19",
-  card: "#211B30",
-  lime: "#C6FF3D",
-  purple: "#8B5CF6",
-  white: "#FFFFFF",
-  muted: "#C9C2D5"
-};
-
-const money = n =>
-  "$" + Math.round(n).toLocaleString("es-CO");
+import { money } from "./src/utils/money";
+import { C } from "./src/styles/colors";
+import Button from "./src/components/button";
+import ProductCard from "./src/components/productCard";
+import ProductDetail from "./src/components/productDetail";
+import CartScreen from "./src/components/cartScreen";
+import OrderHistory from "./src/components/orderHistory";
 
 const shippingFor = n => n === 0 || n >= 150000 ? 0 : 8000;
-
-function Button({
-  title,
-  onPress,
-  disabled = false,
-  outline = false
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      style={[
-        s.button,
-        outline && s.outline,
-        disabled && { opacity: 0.4 }
-      ]}
-    >
-      <Text
-        style={[
-          s.buttonText,
-          outline && { color: C.white }
-        ]}
-      >
-        {title}
-      </Text>
-    </Pressable>
-  );
-}
 
 export default function App() {
 
@@ -575,193 +542,27 @@ function saveReview() {
       >
 
         {page === "Detalle" && selected ? (
-          <>
-            <View style={s.top}>
-
-              <Text
-                onPress={() => setPage("Inicio")}
-                style={s.topIcon}
-              >
-                ‹
-              </Text>
-
-              <Text style={s.heading}>
-                MUNOVA
-              </Text>
-
-              <Text
-                onPress={() =>
-                  setFavorites(old =>
-                    old.includes(selected.id)
-                      ? old.filter(x => x !== selected.id)
-                      : [...old, selected.id]
-                  )
-                }
-                style={s.topIcon}
-              >
-                {favorites.includes(selected.id) ? "♥" : "♡"}
-              </Text>
-            </View>
-
-            <View style={s.hero}>
-              <Text style={{ fontSize: 100 }}>
-                {selected.icon}
-              </Text>
-            </View>
-
-            <Text style={s.detailTitle}>
-              {selected.name}
-            </Text>
-
-            <Text style={s.detailCategory}>
-              {selected.category}
-            </Text>
-
-            <Text style={s.description}>
-              {selected.description}
-            </Text>
-
-            <Text style={s.detailPrice}>
-              {money(selected.price)}
-            </Text>
-
-            <Text style={s.stock}>
-              {selected.stock > 0
-                ? `✓ En stock (${selected.stock})`
-                : "Agotado"}
-            </Text>
-
-            <View style={{
-              backgroundColor: C.card,
-              padding: 16,
-              borderRadius: 16,
-              marginTop: 20,
-              gap: 12
-            }}>
-              <Text style={s.section}>
-                Opiniones de compradores
-              </Text>
-
-              <View style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 8
-              }}>
-                <Text style={{
-                  color: C.lime,
-                  fontSize: 25,
-                  fontWeight: "900"
-                }}>
-                  {selectedReviews.length > 0
-                    ? reviewAverage.toFixed(1)
-                    : "—"}
-                </Text>
-
-                <View>
-                  <Text style={{ color: C.lime, fontSize: 18 }}>
-                    {selectedReviews.length > 0
-                      ? "★".repeat(Math.round(reviewAverage))
-                      : "☆☆☆☆☆"}
-                  </Text>
-
-                  <Text style={s.muted}>
-                    {selectedReviews.length} valoraciones
-                  </Text>
-                </View>
-              </View>
-
-              <View style={s.divider} />
-
-              <Text style={s.white}>
-                Califica este producto
-              </Text>
-
-              <View style={{
-                flexDirection: "row",
-                gap: 10
-              }}>
-                {[1, 2, 3, 4, 5].map(number => (
-                  <Pressable
-                    key={number}
-                    onPress={() => setRating(number)}
-                  >
-                    <Text style={{
-                      fontSize: 32,
-                      color: number <= rating ? C.lime : "#6D637D"
-                    }}>
-                      ★
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-
-              <Text style={s.muted}>
-                {rating > 0
-                  ? `Seleccionaste ${rating} de 5 estrellas`
-                  : "Selecciona una cantidad de estrellas"}
-              </Text>
-
-              <Button
-                title="Enviar valoración"
-                onPress={saveReview}
-              />
-
-              <View style={s.divider} />
-
-              <Text style={s.white}>
-                Valoraciones registradas
-              </Text>
-
-              {selectedReviews.length === 0 ? (
-                <Text style={s.muted}>
-                  Este producto todavía no tiene valoraciones.
-                </Text>
-              ) : (
-                selectedReviews.map(review => (
-                  <View
-                    key={review.id}
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      paddingVertical: 5
-                    }}
-                  >
-                    <Text style={s.muted}>
-                      Comprador simulado
-                    </Text>
-
-                    <Text style={{
-                      color: C.lime,
-                      fontSize: 17
-                    }}>
-                      {"★".repeat(review.rating)}
-                      <Text style={{ color: "#6D637D" }}>
-                        {"☆".repeat(5 - review.rating)}
-                      </Text>
-                    </Text>
-                  </View>
-                ))
-              )}
-            </View>
-
-            <View style={s.info}>
-              <Text style={s.white}>
-                🚚 Envíos a $8.000
-              </Text>
-
-              <Text style={s.muted}>
-                En compras menores a $150.000
-              </Text>
-            </View>
-
-            <Button
-              title="🛒 Agregar al carrito"
-              onPress={() => add(selected)}
-              disabled={selected.stock === 0}
-            />
-          </>
-        ) : null}
+        <ProductDetail
+          selected={selected}
+          favorites={favorites}
+          onBack={() => setPage("Inicio")}
+          onToggleFavorite={() =>
+            setFavorites(old =>
+              old.includes(selected.id)
+                ? old.filter(x => x !== selected.id)
+                : [...old, selected.id]
+            )
+          }
+          money={money}
+          selectedReviews={selectedReviews}
+          reviewAverage={reviewAverage}
+          rating={rating}
+          onRatingChange={setRating}
+          onSaveReview={saveReview}
+          onAddToCart={() => add(selected)}
+          s={s}
+        />
+      ) : null}
 
         {["Inicio", "Favoritos"].includes(page) && (
           <>
@@ -904,90 +705,25 @@ function saveReview() {
             ) : (
               <View style={s.grid}>
                 {visible.map(p => (
-                  <View
+                  <ProductCard
                     key={p.id}
-                    style={s.product}
-                  >
-
-                    <Pressable
-                      onPress={() => {
-                        setSelected(p);
-                        setPage("Detalle");
-                      }}
-                      style={s.productPic}
-                    >
-                      <Text style={{ fontSize: 48 }}>
-                        {p.icon}
-                      </Text>
-                    </Pressable>
-
-                    <Pressable
-                      onPress={() =>
-                        setFavorites(old =>
-                          old.includes(p.id)
-                            ? old.filter(x => x !== p.id)
-                            : [...old, p.id]
-                        )
-                      }
-                      style={s.heart}
-                    >
-                      <Text style={s.heartText}>
-                        {favorites.includes(p.id) ? "♥" : "♡"}
-                      </Text>
-                    </Pressable>
-
-                    <Text
-                      style={s.productName}
-                      onPress={() => {
-                        setSelected(p);
-                        setRating(0);
-                        setPage("Detalle");
-                      }}
-                    >
-                      {p.name}
-                    </Text>
-
-                    <Text style={s.productCategory}>
-                      {p.category}
-                    </Text>
-
-                    <Text
-                      style={[
-                        s.availability,
-                        {
-                          color: p.stock > 0 ? "#83B900" : "#FF6B9D"
-                        }
-                      ]}
-                    >
-                      {p.stock > 0 ? "● Disponible" : "● Agotado"}
-                    </Text>
-
-                    <View style={s.productBottom}>
-
-                      
-                      <Text style={s.productPrice}>
-                        {money(p.price)}
-                      </Text>
-              
-                      <Pressable
-                        onPress={() => add(p)}
-                        disabled={!p.stock}
-                        style={[
-                          s.cartButton,
-                          !p.stock && { opacity: 0.4 }
-                        ]}
-                      >
-                        
-                        <Text style={s.cartButtonText}>
-                          <Ionicons
-                            name="cart-outline"
-                            size={20}
-                            color={C.bg}
-                          />
-                        </Text>
-                      </Pressable>
-                    </View>
-                  </View>
+                    product={p}
+                    isFavorite={favorites.includes(p.id)}
+                    onOpen={() => {
+                      setSelected(p);
+                      setRating(0);
+                      setPage("Detalle");
+                    }}
+                    onToggleFavorite={() =>
+                      setFavorites(old =>
+                        old.includes(p.id)
+                          ? old.filter(x => x !== p.id)
+                          : [...old, p.id]
+                      )
+                    }
+                    onAdd={() => add(p)}
+                    money={money}
+                  />
                 ))}
               </View>
             )}
@@ -1261,227 +997,39 @@ function saveReview() {
       )}
 
         {page === "Carrito" && (
-          <>
-            <Text style={s.heading}>
-              {title}
-            </Text>
-
-            {!cart.length ? (
-              <Text style={s.empty}>
-                Tu carrito está vacío. Explora MUNOVA y agrega productos.
-              </Text>
-            ) : (
-              <>
-                {cart.map(p => (
-                  <View
-                    key={p.id}
-                    style={s.cartLine}
-                  >
-
-                    <Text style={{ fontSize: 32 }}>
-                      {p.icon}
-                    </Text>
-
-                    <View style={{ flex: 1 }}>
-
-                    <View style={s.cartInfoTop}>
-                      <Text style={s.white}>
-                        {p.name}
-                      </Text>
-
-                      <Text style={s.cartPrice}>
-                        {money(p.price * p.qty)}
-                      </Text>
-                    </View>
-
-                    <View style={s.cartActions}>
-
-                      <Text
-                        onPress={() => quantity(p.id, -1)}
-                        style={s.qty}
-                      >
-                        −
-                      </Text>
-
-                      <Text style={s.white}>
-                        {p.qty}
-                      </Text>
-
-                      <Text
-                        onPress={() => quantity(p.id, 1)}
-                        style={s.qty}
-                      >
-                        +
-                      </Text>
-
-                      <Pressable
-                        onPress={() =>
-                          setCart(old =>
-                            old.filter(x => x.id !== p.id)
-                          )
-                        }
-                        style={s.removeButton}
-                      >
-                        <Ionicons
-                          name="trash-outline"
-                          size={15}
-                          color={C.muted}
-                        />
-                        <Text style={s.removeText}>
-                          Quitar
-                        </Text>
-                      </Pressable>
-
-                    </View>
-                      </View>
-                  </View>
-                ))}
-
-                <View style={s.couponContainer}>
-
-                  <Text style={s.section}>
-                    ¿Tienes un cupón promocional?
-                  </Text>
-
-                  {!appliedCoupon ? (
-                    <>
-                      <View style={s.couponRow}>
-
-                        <TextInput
-                          value={couponInput}
-                          onChangeText={setCouponInput}
-                          placeholder="Ingresa tu código"
-                          placeholderTextColor={C.muted}
-                          autoCapitalize="characters"
-                          style={s.couponInput}
-                        />
-
-                        <Pressable
-                          onPress={applyCoupon}
-                          style={s.couponButton}
-                        >
-                          <Text style={s.couponButtonText}>
-                            Aplicar
-                          </Text>
-                        </Pressable>
-
-                      </View>
-                    </>
-                  ) : (
-                    <View style={s.couponApplied}>
-
-                      <View>
-                        <Text style={s.lime}>
-                          ✓ {appliedCoupon}
-                        </Text>
-
-                        <Text style={s.muted}>
-                          Descuento del 10% aplicado
-                        </Text>
-                      </View>
-
-                      <Pressable
-                        onPress={() => setAppliedCoupon("")}
-                      >
-                        <Text style={s.removeText}>
-                          Quitar
-                        </Text>
-                      </Pressable>
-
-                    </View>
-                  )}
-
-                </View>
-
-                <View style={s.summary}>
-                  <View style={s.row}>
-                    <Text style={s.white}>Subtotal</Text>
-                    <Text style={s.white}>{money(subtotal)}</Text>
-                  </View>
-
-                  <View style={s.row}>
-                    <Text style={s.white}>Envío</Text>
-                    <Text style={s.white}>
-                      {shipping ? money(shipping) : "Gratis"}
-                    </Text>
-                  </View>
-
-                  
-
-                  {discount > 0 && (
-                    <View style={s.row}>
-                      <Text style={s.lime}>
-                        Descuento ({appliedCoupon})
-                      </Text>
-
-                      <Text style={s.lime}>
-                        -{money(discount)}
-                      </Text>
-                    </View>
-                  )}
-
-
-                  <View style={s.row}>
-                    <Text style={s.section}>Total</Text>
-                    <Text style={s.total}>{money(total)}</Text>
-                  </View>
-                </View>
-
-                <Button
-                  title="✓ Confirmar compra"
-                  onPress={() => setCheckout(true)}
-                />
-              </>
-            )}
-          </>
-        )}
+        <CartScreen
+          title={title}
+          cart={cart}
+          money={money}
+          quantity={quantity}
+          onRemove={(id) =>
+            setCart(old =>
+              old.filter(x => x.id !== id)
+            )
+          }
+          couponInput={couponInput}
+          onCouponInputChange={setCouponInput}
+          appliedCoupon={appliedCoupon}
+          onApplyCoupon={applyCoupon}
+          onRemoveCoupon={() => setAppliedCoupon("")}
+          subtotal={subtotal}
+          shipping={shipping}
+          discount={discount}
+          total={total}
+          onCheckout={() => setCheckout(true)}
+          s={s}
+        />
+      )}
 
         {page === "Historial" && (
-          <>
-
-            <Text style={s.heading}>
-              {title}
-            </Text>
-
-            {orders.length === 0 ? (
-
-              <Text style={s.empty}>
-                Aún no tienes pedidos confirmados.
-              </Text>
-            ) : (
-              orders.map(o => (
-                <Pressable
-                  key={o.code}
-                  style={s.order}
-                  onPress={() => setSelectedOrder(o)}
-                >
-
-                  <Text style={s.lime}>
-                    {o.code}
-                  </Text>
-
-                  <Text style={s.muted}>
-                    {o.date}
-                  </Text>
-
-                  {o.items.map(p => (
-
-                    <Text
-                      key={p.id}
-                      style={s.white}
-                    >
-                      {p.qty} × {p.name} · {money(p.price)}
-                    </Text>
-                  ))}
-
-                  <Text style={s.total}>
-                    {money(o.total)}
-                  </Text>
-                </Pressable>
-              ))
-            )}
-          </>
-        )}
+        <OrderHistory
+          title={title}
+          orders={orders}
+          money={money}
+          onSelectOrder={setSelectedOrder}
+          s={s}
+        />
+      )}
               {selectedOrder && (
         <View style={s.overlay}>
           <View style={s.modal}>
