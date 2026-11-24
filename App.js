@@ -179,6 +179,8 @@ export default function App() {
   const [category, setCategory] = useState("Todas");
   const [sort, setSort] = useState("none");
 
+  const [showSort, setShowSort] = useState(false);
+
   const [buyer, setBuyer] = useState({
     nombre: "",
     telefono: "",
@@ -497,42 +499,76 @@ export default function App() {
               ))}
             </ScrollView>
 
-            <View style={s.row}>
-              <Text style={s.section}>
-                {page === "Favoritos"
-                  ? "Mis favoritos"
-                  : "Productos destacados"}
-              </Text>
+           <View style={s.productsHeader}>
 
-              <Text style={s.lime}>
-                {visible.length} productos
-              </Text>
+            <Text style={s.section}>
+              {page === "Favoritos"
+                ? "Mis favoritos"
+                : "Productos destacados"}
+            </Text>
 
+            <View style={s.sortContainer}>
+
+              <Pressable
+                onPress={() => setShowSort(!showSort)}
+                style={s.sortButton}
+              >
+                <Text style={s.sortButtonText}>
+                  {sort === "asc"
+                    ? "Menor precio"
+                    : sort === "desc"
+                    ? "Mayor precio"
+                    : "Ordenar por"}
+                </Text>
+
+                <Text style={s.sortArrow}>
+                  {<Ionicons name={showSort ? "chevron-up" : "chevron-down"} size={16} color={C.lime}/>}
+                </Text>
+              </Pressable>
+
+              {showSort && (
+                <View style={s.sortMenu}>
+
+                  <Pressable
+                    onPress={() => {
+                      setSort("asc");
+                      setShowSort(false);
+                    }}
+                    style={s.sortOption}
+                  >
+                    <Text style={s.sortOptionText}>
+                      ↑ Menor precio
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => {
+                      setSort("desc");
+                      setShowSort(false);
+                    }}
+                    style={s.sortOption}
+                  >
+                    <Text style={s.sortOptionText}>
+                      ↓ Mayor precio
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => {
+                      setSort("none");
+                      setShowSort(false);
+                    }}
+                    style={s.sortOption}
+                  >
+                    <Text style={s.sortClearText}>
+                      Limpiar orden
+                    </Text>
+                  </Pressable>
+
+                </View>
+              )}
             </View>
-
-            <View style={s.row}>
-
-              <Text
-                onPress={() => setSort("asc")}
-                style={s.muted}
-              >
-                Menor precio
-              </Text>
-
-              <Text
-                onPress={() => setSort("desc")}
-                style={s.muted}
-              >
-                Mayor precio
-              </Text>
-
-              <Text
-                onPress={() => setSort("none")}
-                style={s.muted}
-              >
-                Limpiar
-              </Text>
-            </View>
+          </View>
 
             {visible.length === 0 ? (
               <Text style={s.empty}>
@@ -935,6 +971,77 @@ const s = StyleSheet.create({
     marginBottom: 15
   },
 
+  productsHeader: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  width: "100%",
+  marginVertical: 12
+},
+
+  sortContainer: {
+  alignItems: "flex-end",
+  marginLeft: 8,
+  zIndex: 10
+},
+
+  sortButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: "#453B59",
+    borderRadius: 12,
+    paddingVertical: 9,
+    paddingHorizontal: 10,
+    minWidth: 125
+  },
+
+  sortButtonText: {
+    color: C.white,
+    fontSize: 12,
+    fontWeight: "700"
+  },
+
+  sortArrow: {
+    color: C.lime,
+    fontSize: 17,
+    marginLeft: 12
+  },
+
+  sortMenu: {
+    position: "absolute",
+    top: "100%",
+    right: 0,
+    marginTop: 6,
+    backgroundColor: C.card,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#453B59",
+    paddingVertical: 4,
+    minWidth: 155,
+    zIndex: 20,
+    elevation: 8,
+  },
+
+  sortOption: {
+    paddingVertical: 11,
+    paddingHorizontal: 13
+  },
+
+  sortOptionText: {
+    color: C.white,
+    fontSize: 12,
+    fontWeight: "600"
+  },
+
+  sortClearText: {
+    color: C.muted,
+    fontSize: 12,
+    fontWeight: "600"
+  },
+
   category: {
     width: 100,
     minHeight: 72,
@@ -953,14 +1060,10 @@ const s = StyleSheet.create({
   },
 
   section: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "900",
-    color: C.white
-  },
-
-  lime: {
-    color: C.lime,
-    fontWeight: "900"
+    color: C.white,
+    flexShrink: 1,
   },
 
   muted: {
