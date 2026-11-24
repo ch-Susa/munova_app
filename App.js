@@ -174,7 +174,8 @@ export default function App() {
 
   const [page, setPage] = useState("Inicio");
   const [selected, setSelected] = useState(null);
-
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Todas");
   const [sort, setSort] = useState("none");
@@ -288,10 +289,39 @@ export default function App() {
     );
   }
 
+  
   function confirm() {
 
-    if (Object.values(buyer).some(v => !v.trim())) {
-      return Alert.alert("Completa los cuatro campos.");
+    const campos = {
+      nombre: "Nombre",
+      telefono: "Teléfono",
+      municipio: "Municipio",
+      direccion: "Dirección"
+    };
+
+    const camposVacios = Object.entries(campos)
+      .filter(([key]) => !buyer[key].trim())
+      .map(([, label]) => label);
+
+    if (camposVacios.length > 0) {
+      return Alert.alert(
+        "Campos obligatorios",
+        `Completa los siguientes campos:\n\n${camposVacios.join("\n")}`
+      );
+    }
+
+    if (!/^\d+$/.test(buyer.telefono.trim())) {
+      return Alert.alert(
+        "Teléfono inválido",
+        "El teléfono debe contener únicamente números."
+      );
+    }
+
+    if (buyer.telefono.trim().length !== 10) {
+      return Alert.alert(
+        "Teléfono inválido",
+        "El teléfono debe tener exactamente 10 dígitos."
+      );
     }
 
     if (!cart.length) {
@@ -341,6 +371,7 @@ export default function App() {
     });
 
     setPage("Historial");
+
     Alert.alert(
       "Pedido simulado",
       `Pedido ${order.code} confirmado. No se realizó ningún cobro.`
@@ -406,6 +437,10 @@ export default function App() {
               {selected.name}
             </Text>
 
+            <Text style={s.detailCategory}>
+              {selected.category}
+            </Text>
+
             <Text style={s.description}>
               {selected.description}
             </Text>
@@ -447,12 +482,11 @@ export default function App() {
               </View>
 
               <View style={s.notificationButton}>
-                <Text style={s.notificationIcon}>
                   <Ionicons
                   name="notifications-outline"
                   size={23}
                   color={C.lime}
-                /></Text>
+                />
               </View>
             </View>
 
@@ -521,9 +555,7 @@ export default function App() {
                     : "Ordenar por"}
                 </Text>
 
-                <Text style={s.sortArrow}>
                   {<Ionicons name={showSort ? "chevron-up" : "chevron-down"} size={16} color={C.lime}/>}
-                </Text>
               </Pressable>
 
               {showSort && (
@@ -689,49 +721,57 @@ export default function App() {
                     </Text>
 
                     <View style={{ flex: 1 }}>
+
+                    <View style={s.cartInfoTop}>
                       <Text style={s.white}>
                         {p.name}
                       </Text>
 
-                      <Text style={s.lime}>
-                        {money(p.price)}
+                      <Text style={s.cartPrice}>
+                        {money(p.price * p.qty)}
                       </Text>
-
-                      <View style={s.row}>
-                        <Text
-                          onPress={() => quantity(p.id, -1)}
-                          style={s.qty}
-                        >
-                          −
-                        </Text>
-
-                        <Text style={s.white}>
-                          {p.qty}
-                        </Text>
-
-                        <Text
-                          onPress={() => quantity(p.id, 1)}
-                          style={s.qty}
-                        >
-                          +
-                        </Text>
-
-                        <Text
-                          onPress={() =>
-                            setCart(old =>
-                              old.filter(x => x.id !== p.id)
-                            )
-                          }
-                          style={s.remove}
-                        >
-                          Quitar
-                        </Text>
-                      </View>
                     </View>
 
-                    <Text style={s.lime}>
-                      {money(p.price * p.qty)}
-                    </Text>
+                    <View style={s.cartActions}>
+
+                      <Text
+                        onPress={() => quantity(p.id, -1)}
+                        style={s.qty}
+                      >
+                        −
+                      </Text>
+
+                      <Text style={s.white}>
+                        {p.qty}
+                      </Text>
+
+                      <Text
+                        onPress={() => quantity(p.id, 1)}
+                        style={s.qty}
+                      >
+                        +
+                      </Text>
+
+                      <Pressable
+                        onPress={() =>
+                          setCart(old =>
+                            old.filter(x => x.id !== p.id)
+                          )
+                        }
+                        style={s.removeButton}
+                      >
+                        <Ionicons
+                          name="trash-outline"
+                          size={15}
+                          color={C.muted}
+                        />
+                        <Text style={s.removeText}>
+                          Quitar
+                        </Text>
+                      </Pressable>
+
+                    </View>
+                      </View>
                   </View>
                 ))}
 
@@ -777,9 +817,10 @@ export default function App() {
               </Text>
             ) : (
               orders.map(o => (
-                <View
+                <Pressable
                   key={o.code}
                   style={s.order}
+                  onPress={() => setSelectedOrder(o)}
                 >
 
                   <Text style={s.lime}>
@@ -803,11 +844,76 @@ export default function App() {
                   <Text style={s.total}>
                     {money(o.total)}
                   </Text>
-                </View>
+                </Pressable>
               ))
             )}
           </>
         )}
+              {selectedOrder && (
+        <View style={s.overlay}>
+          <View style={s.modal}>
+
+            <Text style={s.section}>
+              Detalle del pedido
+            </Text>
+
+            <Text style={s.lime}>
+              {selectedOrder.code}
+            </Text>
+
+            <Text style={s.muted}>
+              Fecha: {selectedOrder.date}
+            </Text>
+
+            <Text style={s.section}>
+              Productos
+            </Text>
+
+            {selectedOrder.items.map(p => (
+              <View key={p.id} style={s.row}>
+                <Text style={s.white}>
+                  {p.qty} × {p.name}
+                </Text>
+
+                <Text style={s.white}>
+                  {money(p.price * p.qty)}
+                </Text>
+              </View>
+            ))}
+
+            <View style={s.divider} />
+
+            <View style={s.row}>
+              <Text style={s.white}>Subtotal</Text>
+              <Text style={s.white}>
+                {money(selectedOrder.subtotal)}
+              </Text>
+            </View>
+
+            <View style={s.row}>
+              <Text style={s.white}>Envío</Text>
+              <Text style={s.white}>
+                {selectedOrder.shipping
+                  ? money(selectedOrder.shipping)
+                  : "Gratis"}
+              </Text>
+            </View>
+
+            <View style={s.row}>
+              <Text style={s.section}>Total</Text>
+              <Text style={s.total}>
+                {money(selectedOrder.total)}
+              </Text>
+            </View>
+
+            <Button
+              title="Cerrar detalle"
+              onPress={() => setSelectedOrder(null)}
+            />
+
+          </View>
+        </View>
+      )}
       </ScrollView>
 
       {page !== "Detalle" && (
@@ -882,6 +988,8 @@ export default function App() {
 
               <TextInput
                 key={k}
+                keyboardType={k === "telefono" ? "phone-pad" : "default"}
+                maxLength={k === "telefono" ? 10 : undefined}
                 value={buyer[k]}
                 onChangeText={v =>
                   setBuyer(old => ({
@@ -963,6 +1071,12 @@ const s = StyleSheet.create({
     color: C.lime
   },
 
+  divider: {
+  height: 1,
+  backgroundColor: "#453B59",
+  marginVertical: 8
+},
+
   search: {
     backgroundColor: "#514A60",
     borderRadius: 25,
@@ -1004,10 +1118,9 @@ const s = StyleSheet.create({
     fontWeight: "700"
   },
 
-  sortArrow: {
+  lime: {
     color: C.lime,
-    fontSize: 17,
-    marginLeft: 12
+    fontWeight: "800"
   },
 
   sortMenu: {
@@ -1154,16 +1267,53 @@ const s = StyleSheet.create({
     fontSize: 18
   },
 
-  stockSmall: {
-    fontSize: 10,
-    color: "#554D60"
+  cartInfoTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 6
+  },
+
+  cartPrice: {
+    color: C.lime,
+    fontSize: 16,
+    fontWeight: "900"
+  },
+
+  cartActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 12,
+    flexWrap: "wrap"
+  },
+
+  removeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    backgroundColor: "#2B233A",
+    borderWidth: 1,
+    borderColor: "#453B59",
+    paddingHorizontal: 9,
+    paddingVertical: 7,
+    borderRadius: 10,
+    marginLeft: "auto"
+  },
+
+  removeText: {
+    color: C.muted,
+    fontSize: 11,
+    fontWeight: "700"
   },
 
   button: {
     backgroundColor: C.lime,
     padding: 13,
     borderRadius: 25,
-    alignItems: "left",
+    alignItems: "center",
     marginTop: 9
   },
 
@@ -1209,6 +1359,14 @@ const s = StyleSheet.create({
     fontSize: 25,
     fontWeight: "900",
     color: C.white
+  },
+
+  detailCategory: {
+    color: C.lime,
+    fontSize: 13,
+    fontWeight: "700",
+    marginTop: 6,
+    marginBottom: 8,
   },
 
   description: {
@@ -1272,11 +1430,6 @@ const s = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 15,
     fontSize: 18
-  },
-
-  remove: {
-    color: "#FF9BAE",
-    fontSize: 11
   },
 
   summary: {
