@@ -429,6 +429,8 @@ export default function App() {
       ? "Historial de pedidos"
       : page === "Detalle"
       ? "MUNOVA"
+      : page === "Vendedor"
+      ? "Panel de vendedor"
       : page === "Favoritos"
       ? "Mis favoritos"
       : "MUNOVA";
@@ -521,8 +523,13 @@ export default function App() {
           <>
             <View style={s.appHeader}>
               <View>
-                <Text style={s.brand}>✳ MUNOVA</Text>
-                <Text style={s.tagline}>Descubre. Compra. Disfruta.</Text>
+                <Pressable onPress={() => setPage("Vendedor")}>
+                  <Text style={s.brand}>✳ MUNOVA</Text>
+                </Pressable>
+
+                <Text style={s.tagline}>
+                  Descubre. Compra. Disfruta.
+                </Text>
               </View>
 
               <View style={s.notificationButton}>
@@ -741,6 +748,151 @@ export default function App() {
             )}
           </>
         )}
+
+        {page === "Vendedor" && (
+        <>
+          <View style={s.top}>
+            <Text style={s.heading}>
+              Panel de vendedor
+            </Text>
+
+            <Pressable onPress={() => setPage("Inicio")}>
+              <Ionicons
+                name="close"
+                size={26}
+                color={C.white}
+              />
+            </Pressable>
+          </View>
+
+          <Text style={s.muted}>
+            Administra tu tienda y consulta su actividad.
+          </Text>
+
+          {/* Resumen */}
+          <View style={{
+            flexDirection: "row",
+            gap: 10,
+            marginTop: 20
+          }}>
+            <View style={{
+              flex: 1,
+              backgroundColor: C.card,
+              padding: 15,
+              borderRadius: 15
+            }}>
+              <Ionicons name="cube-outline" size={22} color={C.lime} />
+
+              <Text style={s.muted}>Productos</Text>
+
+              <Text style={s.total}>
+                {products.length}
+              </Text>
+            </View>
+
+            <View style={{
+              flex: 1,
+              backgroundColor: C.card,
+              padding: 15,
+              borderRadius: 15
+            }}>
+              <Ionicons name="receipt-outline" size={22} color={C.purple} />
+
+              <Text style={s.muted}>Pedidos</Text>
+
+              <Text style={s.total}>
+                {orders.length}
+              </Text>
+            </View>
+          </View>
+
+          {/* Inventario */}
+          <View style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginTop: 25,
+            marginBottom: 10
+          }}>
+            <Text style={s.section}>
+              Mis productos
+            </Text>
+
+            <Text style={s.lime}>
+              {products.filter(p => p.stock > 0).length} disponibles
+            </Text>
+          </View>
+
+          {products.map(p => (
+            <View
+              key={p.id}
+              style={[s.order, {
+                flexDirection: "row",
+                alignItems: "center"
+              }]}
+            >
+              <Text style={{ fontSize: 28 }}>
+                {p.icon}
+              </Text>
+
+              <View style={{ flex: 1, marginLeft: 10 }}>
+                <Text style={s.white}>
+                  {p.name}
+                </Text>
+
+                <Text style={s.muted}>
+                  {p.category}
+                </Text>
+
+                <Text style={{
+                  color: p.stock > 0 ? C.lime : "#FF6B9D",
+                  fontSize: 12,
+                  marginTop: 4
+                }}>
+                  {p.stock > 0
+                    ? `${p.stock} unidades disponibles`
+                    : "Agotado"}
+                </Text>
+              </View>
+
+              <Text style={s.lime}>
+                {money(p.price)}
+              </Text>
+            </View>
+          ))}
+
+          {/* Pedidos */}
+          <Text style={[s.section, { marginTop: 22, marginBottom: 10 }]}>
+            Pedidos recibidos
+          </Text>
+
+          {orders.length === 0 ? (
+            <Text style={s.empty}>
+              Todavía no has recibido pedidos.
+            </Text>
+          ) : (
+            orders.map(o => (
+              <View key={o.code} style={s.order}>
+                <Text style={s.lime}>
+                  {o.code}
+                </Text>
+
+                <Text style={s.muted}>
+                  {o.date}
+                </Text>
+
+                <Text style={s.white}>
+                  {o.items.reduce((sum, p) => sum + p.qty, 0)} productos
+                </Text>
+
+                <Text style={s.total}>
+                  {money(o.total)}
+                </Text>
+              </View>
+            ))
+          )}
+        </>
+      )}
 
         {page === "Carrito" && (
           <>
@@ -1043,7 +1195,7 @@ export default function App() {
       )}
       </ScrollView>
 
-      {page !== "Detalle" && (
+      {page !== "Detalle" && page !== "Vendedor" && (
   <View style={s.tabs}>
     {["Inicio", "Favoritos", "Carrito", "Historial"].map(name => {
 
