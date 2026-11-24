@@ -175,6 +175,17 @@ export default function App() {
   const [page, setPage] = useState("Inicio");
   const [selected, setSelected] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
+
+  const [editingProductId, setEditingProductId] = useState(null);
+
+  const [sellerForm, setSellerForm] = useState({
+    name: "",
+    category: categories[1],
+    price: "",
+    stock: "",
+    description: "",
+    icon: "📦"
+  });
   
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Todas");
@@ -327,6 +338,114 @@ export default function App() {
     "¡Cupón aplicado!",
     "Has obtenido un descuento del 10%."
   );
+}
+
+function resetSellerForm() {
+  setSellerForm({
+    name: "",
+    category: categories[1],
+    price: "",
+    stock: "",
+    description: "",
+    icon: "📦"
+  });
+
+  setEditingProductId(null);
+}
+
+function editProduct(product) {
+  setEditingProductId(product.id);
+
+  setSellerForm({
+    name: product.name,
+    category: product.category,
+    price: String(product.price),
+    stock: String(product.stock),
+    description: product.description,
+    icon: product.icon || "📦"
+  });
+}
+
+function saveSellerProduct() {
+  const name = sellerForm.name.trim();
+  const price = Number(sellerForm.price);
+  const stock = Number(sellerForm.stock);
+
+  if (!name || !sellerForm.price.trim() || !sellerForm.stock.trim()) {
+    return Alert.alert(
+      "Campos obligatorios",
+      "Completa el nombre, precio y stock del producto."
+    );
+  }
+
+  if (!Number.isFinite(price) || price <= 0) {
+    return Alert.alert(
+      "Precio inválido",
+      "El precio debe ser un número mayor que cero."
+    );
+  }
+
+  if (
+    !Number.isInteger(stock) ||
+    stock < 0
+  ) {
+    return Alert.alert(
+      "Stock inválido",
+      "El stock debe ser un número entero igual o mayor que cero."
+    );
+  }
+
+  if (!sellerForm.category || sellerForm.category === "Todas") {
+    return Alert.alert(
+      "Categoría inválida",
+      "Selecciona una categoría para el producto."
+    );
+  }
+
+  const productData = {
+    name,
+    category: sellerForm.category,
+    price,
+    stock,
+    description: sellerForm.description.trim(),
+    icon: sellerForm.icon.trim() || "📦"
+  };
+
+  if (editingProductId) {
+    setProducts(old =>
+      old.map(product =>
+        product.id === editingProductId
+          ? { ...product, ...productData }
+          : product
+      )
+    );
+
+    Alert.alert(
+      "Producto actualizado",
+      "Los cambios se guardaron correctamente."
+    );
+  } else {
+    let id = `PROD-${Date.now()}`;
+
+    while (products.some(product => product.id === id)) {
+      id = `PROD-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    }
+
+    setProducts(old => [
+      ...old,
+      {
+        id,
+        ...productData
+      }
+    ]);
+
+    Alert.alert(
+      "Producto registrado",
+      "El producto se agregó correctamente al catálogo."
+    );
+  }
+
+  resetSellerForm();
 }
   
   function confirm() {
@@ -756,7 +875,12 @@ export default function App() {
               Panel de vendedor
             </Text>
 
-            <Pressable onPress={() => setPage("Inicio")}>
+            <Pressable
+              onPress={() => {
+                resetSellerForm();
+                setPage("Inicio");
+              }}
+            >
               <Ionicons
                 name="close"
                 size={26}
@@ -766,7 +890,7 @@ export default function App() {
           </View>
 
           <Text style={s.muted}>
-            Administra tu tienda y consulta su actividad.
+            Administra tu tienda y actualiza tu catálogo.
           </Text>
 
           {/* Resumen */}
@@ -782,12 +906,8 @@ export default function App() {
               borderRadius: 15
             }}>
               <Ionicons name="cube-outline" size={22} color={C.lime} />
-
               <Text style={s.muted}>Productos</Text>
-
-              <Text style={s.total}>
-                {products.length}
-              </Text>
+              <Text style={s.total}>{products.length}</Text>
             </View>
 
             <View style={{
@@ -797,13 +917,126 @@ export default function App() {
               borderRadius: 15
             }}>
               <Ionicons name="receipt-outline" size={22} color={C.purple} />
-
               <Text style={s.muted}>Pedidos</Text>
-
-              <Text style={s.total}>
-                {orders.length}
-              </Text>
+              <Text style={s.total}>{orders.length}</Text>
             </View>
+          </View>
+
+          {/* Formulario de productos */}
+          <View style={{
+            backgroundColor: C.card,
+            padding: 16,
+            borderRadius: 18,
+            marginTop: 22,
+            gap: 10
+          }}>
+            <Text style={s.section}>
+              {editingProductId ? "Editar producto" : "Registrar producto"}
+            </Text>
+
+            <Text style={s.muted}>
+              Completa los datos para actualizar tu catálogo.
+            </Text>
+
+            <Text style={s.white}>Nombre del producto</Text>
+            <TextInput
+              value={sellerForm.name}
+              onChangeText={v =>
+                setSellerForm(old => ({ ...old, name: v }))
+              }
+              placeholder="Nombre del producto"
+              placeholderTextColor={C.muted}
+              style={s.input}
+            />
+
+            <Text style={s.white}>Categoría</Text>
+
+            <View style={{
+              gap: 8
+            }}>
+              {categories.slice(1).map(cat => (
+                <Pressable
+                  key={cat}
+                  onPress={() =>
+                    setSellerForm(old => ({ ...old, category: cat }))
+                  }
+                  style={{
+                    padding: 11,
+                    borderRadius: 10,
+                    backgroundColor:
+                      sellerForm.category === cat ? C.lime : "#403653"
+                  }}
+                >
+                  <Text style={{
+                    color: sellerForm.category === cat ? C.bg : C.white,
+                    fontWeight: "700",
+                    fontSize: 12
+                  }}>
+                    {cat}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <Text style={s.white}>Precio en COP</Text>
+            <TextInput
+              value={sellerForm.price}
+              onChangeText={v =>
+                setSellerForm(old => ({ ...old, price: v }))
+              }
+              placeholder="Ej. 35000"
+              placeholderTextColor={C.muted}
+              keyboardType="decimal-pad"
+              style={s.input}
+            />
+
+            <Text style={s.white}>Stock disponible</Text>
+            <TextInput
+              value={sellerForm.stock}
+              onChangeText={v =>
+                setSellerForm(old => ({ ...old, stock: v }))
+              }
+              placeholder="Ej. 10"
+              placeholderTextColor={C.muted}
+              keyboardType="number-pad"
+              style={s.input}
+            />
+
+            <Text style={s.white}>Descripción</Text>
+            <TextInput
+              value={sellerForm.description}
+              onChangeText={v =>
+                setSellerForm(old => ({ ...old, description: v }))
+              }
+              placeholder="Describe el producto..."
+              placeholderTextColor={C.muted}
+              multiline
+              style={[s.input, { minHeight: 85, textAlignVertical: "top" }]}
+            />
+
+            <Text style={s.white}>Icono del producto</Text>
+            <TextInput
+              value={sellerForm.icon}
+              onChangeText={v =>
+                setSellerForm(old => ({ ...old, icon: v }))
+              }
+              placeholder="📦"
+              placeholderTextColor={C.muted}
+              style={s.input}
+            />
+
+            <Button
+              title={editingProductId ? "Guardar cambios" : "Registrar producto"}
+              onPress={saveSellerProduct}
+            />
+
+            {editingProductId && (
+              <Button
+                title="Cancelar edición"
+                outline
+                onPress={resetSellerForm}
+              />
+            )}
           </View>
 
           {/* Inventario */}
@@ -814,9 +1047,7 @@ export default function App() {
             marginTop: 25,
             marginBottom: 10
           }}>
-            <Text style={s.section}>
-              Mis productos
-            </Text>
+            <Text style={s.section}>Mis productos</Text>
 
             <Text style={s.lime}>
               {products.filter(p => p.stock > 0).length} disponibles
@@ -836,13 +1067,9 @@ export default function App() {
               </Text>
 
               <View style={{ flex: 1, marginLeft: 10 }}>
-                <Text style={s.white}>
-                  {p.name}
-                </Text>
-
-                <Text style={s.muted}>
-                  {p.category}
-                </Text>
+                <Text style={s.white}>{p.name}</Text>
+                <Text style={s.muted}>{p.id}</Text>
+                <Text style={s.muted}>{p.category}</Text>
 
                 <Text style={{
                   color: p.stock > 0 ? C.lime : "#FF6B9D",
@@ -853,16 +1080,34 @@ export default function App() {
                     ? `${p.stock} unidades disponibles`
                     : "Agotado"}
                 </Text>
+
+                <Text style={s.lime}>
+                  {money(p.price)}
+                </Text>
               </View>
 
-              <Text style={s.lime}>
-                {money(p.price)}
-              </Text>
+              <Pressable
+                onPress={() => editProduct(p)}
+                style={{
+                  backgroundColor: "#403653",
+                  padding: 10,
+                  borderRadius: 10
+                }}
+              >
+                <Ionicons
+                  name="create-outline"
+                  size={20}
+                  color={C.lime}
+                />
+              </Pressable>
             </View>
           ))}
 
           {/* Pedidos */}
-          <Text style={[s.section, { marginTop: 22, marginBottom: 10 }]}>
+          <Text style={[s.section, {
+            marginTop: 22,
+            marginBottom: 10
+          }]}>
             Pedidos recibidos
           </Text>
 
@@ -873,13 +1118,8 @@ export default function App() {
           ) : (
             orders.map(o => (
               <View key={o.code} style={s.order}>
-                <Text style={s.lime}>
-                  {o.code}
-                </Text>
-
-                <Text style={s.muted}>
-                  {o.date}
-                </Text>
+                <Text style={s.lime}>{o.code}</Text>
+                <Text style={s.muted}>{o.date}</Text>
 
                 <Text style={s.white}>
                   {o.items.reduce((sum, p) => sum + p.qty, 0)} productos
@@ -1351,10 +1591,10 @@ const s = StyleSheet.create({
   },
 
   divider: {
-  height: 1,
-  backgroundColor: "#453B59",
-  marginVertical: 8
-},
+    height: 1,
+    backgroundColor: "#453B59",
+    marginVertical: 8
+  },
 
   search: {
     backgroundColor: "#514A60",
@@ -1365,18 +1605,18 @@ const s = StyleSheet.create({
   },
 
   productsHeader: {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  width: "100%",
-  marginVertical: 12
-},
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    marginVertical: 12
+  },
 
   sortContainer: {
-  alignItems: "flex-end",
-  marginLeft: 8,
-  zIndex: 10
-},
+    alignItems: "flex-end",
+    marginLeft: 8,
+    zIndex: 10
+  },
 
   sortButton: {
     flexDirection: "row",
@@ -1680,48 +1920,48 @@ const s = StyleSheet.create({
   },
 
   couponContainer: {
-  backgroundColor: C.card,
-  padding: 14,
-  borderRadius: 15,
-  marginTop: 12,
-  marginBottom: 5,
-  gap: 10
-},
+    backgroundColor: C.card,
+    padding: 14,
+    borderRadius: 15,
+    marginTop: 12,
+    marginBottom: 5,
+    gap: 10
+  },
 
-couponRow: {
-  flexDirection: "row",
-  alignItems: "center",
-  gap: 8
-},
+  couponRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8
+  },
 
-couponInput: {
-  flex: 1,
-  backgroundColor: "#403653",
-  color: C.white,
-  padding: 12,
-  borderRadius: 10
-},
+  couponInput: {
+    flex: 1,
+    backgroundColor: "#403653",
+    color: C.white,
+    padding: 12,
+    borderRadius: 10
+  },
 
-couponButton: {
-  backgroundColor: C.lime,
-  paddingVertical: 12,
-  paddingHorizontal: 15,
-  borderRadius: 10
-},
+  couponButton: {
+    backgroundColor: C.lime,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    borderRadius: 10
+  },
 
-couponButtonText: {
-  color: C.bg,
-  fontWeight: "900"
-},
+  couponButtonText: {
+    color: C.bg,
+    fontWeight: "900"
+  },
 
-couponApplied: {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  backgroundColor: "#302A3D",
-  padding: 12,
-  borderRadius: 10
-},
+  couponApplied: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#302A3D",
+    padding: 12,
+    borderRadius: 10
+  },
 
   white: {
     color: C.white,
@@ -1785,11 +2025,11 @@ couponApplied: {
   },
 
   tabItem: {
-  flex: 1,
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 4
-},
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4
+  },
 
   order: {
     backgroundColor: C.card,
@@ -1825,5 +2065,4 @@ couponApplied: {
     padding: 12,
     borderRadius: 10
   }
-
 });
